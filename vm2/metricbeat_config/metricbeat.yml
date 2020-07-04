@@ -1,0 +1,29 @@
+metricbeat.modules:
+
+- module: system
+  metricsets: ["cpu", "load", "filesystem", "fsstat", "memory", "network", "process", "core", "diskio", "socket"]
+  period: 60s
+  enabled: true
+  processes: ['.*']
+  cpu.metrics:  ["percentages"]
+  core.metrics: ["percentages"]
+
+- module: docker
+  metricsets: ["container", "cpu", "diskio", "healthcheck", "info", "memory", "network"]
+  hosts: ["unix:///var/run/docker.sock"]
+  enabled: true
+  period: 60s
+
+setup.template.settings:
+  index.number_of_shards: 1
+  index.codec: best_compression
+
+output.logstash:
+  hosts: ["server3:9705"]
+
+processors:
+  - add_host_metadata: ~
+  - add_cloud_metadata: ~
+  - add_docker_metadata: ~
+  - add_kubernetes_metadata: ~
+

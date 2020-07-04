@@ -1,0 +1,7 @@
+cluster.name: uaoelk
+node.name: node3
+bootstrap.memory_lock: true
+network.host: es3
+discovery.seed_hosts: ["es1", "es2", "es3"]
+cluster.initial_master_nodes: ["node1", "node2"]
+gateway.recover_after_nodes: 2

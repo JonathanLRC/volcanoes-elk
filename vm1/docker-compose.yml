@@ -1,0 +1,76 @@
+version: '3'
+
+networks:
+  ELK_BRDG:
+    driver: bridge
+
+volumes:
+  elastic1_data:
+    driver: local
+  elastic2_data:
+    driver: local
+  elastic3_data:
+    driver: local
+
+services:
+  es1:
+    container_name: es1
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.6.1
+    networks:
+      - ELK_BRDG
+    ports:
+      - 9700:9200
+    volumes:
+      - elastic1_data:/usr/share/elasticsearch/data:rw
+      - ./elastic1_config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:rw
+      - ./elastic1_config/jvm.options:/usr/share/elasticsearch/config/jvm.options:rw
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+  es2:
+    container_name: es2
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.6.1
+    networks:
+      - ELK_BRDG
+    ports:
+      - 9702:9200
+    volumes:
+      - elastic2_data:/usr/share/elasticsearch/data:rw
+      - ./elastic2_config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:rw
+      - ./elastic2_config/jvm.options:/usr/share/elasticsearch/config/jvm.options:rw
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+  es3:
+    container_name: es3
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.6.1
+    networks:
+      - ELK_BRDG
+    ports:
+      - 9703:9200
+    volumes:
+      - elastic3_data:/usr/share/elasticsearch/data:rw
+      - ./elastic3_config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:rw
+      - ./elastic3_config/jvm.options:/usr/share/elasticsearch/config/jvm.options:rw
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+  metricbeat:
+    container_name: metricbeat
+    image: docker.elastic.co/beats/metricbeat:7.6.1
+    networks:
+      - ELK_BRDG
+    extra_hosts:
+      - "server3:192.168.0.5"
+    volumes:
+      - ./metricbeat_config/metricbeat.yml:/usr/share/metricbeat/metricbeat.yml
+      - /proc:/hostfs/proc:ro
+      - /sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro
+      - /:/hostfs:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    user: root
+    command: ["-e", "-system.hostfs=/hostfs", "--strict.perms=false"]
+

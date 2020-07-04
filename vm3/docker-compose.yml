@@ -1,0 +1,60 @@
+version: '3'
+
+networks:
+  ELK_BRDG:
+    driver: bridge
+
+services:
+  logstash-metricbeat:
+    container_name: logstash-metricbeat
+    image: docker.elastic.co/logstash/logstash:7.6.1
+    networks:
+      - ELK_BRDG
+    extra_hosts:
+      - "server1:192.168.0.3"
+    ports:
+      - 9705:5044
+    volumes:
+      - ./logstash_metricbeat_config/logstash.yml:/usr/share/logstash/config/logstash.yml
+      - ./logstash_metricbeat_config/pipeline:/usr/share/logstash/pipeline
+      - ./logstash_metricbeat_config/jvm.options:/usr/share/logstash/config/jvm.options
+  logstash-filebeat:
+    container_name: logstash-filebeat
+    image: docker.elastic.co/logstash/logstash:7.6.1
+    networks:
+      - ELK_BRDG
+    extra_hosts:
+      - "server1:192.168.0.3"
+    ports:
+      - 9704:5045
+    volumes:
+      - ./logstash_filebeat_config/logstash.yml:/usr/share/logstash/config/logstash.yml
+      - ./logstash_filebeat_config/pipeline:/usr/share/logstash/pipeline
+      - ./logstash_filebeat_config/jvm.options:/usr/share/logstash/config/jvm.options
+  metricbeat:
+    container_name: metricbeat
+    image: docker.elastic.co/beats/metricbeat:7.6.1
+    networks:
+      - ELK_BRDG
+    extra_hosts:
+      - "server3:192.168.0.5"
+    volumes:
+      - ./metricbeat_config/metricbeat.yml:/usr/share/metricbeat/metricbeat.yml
+      - /proc:/hostfs/proc:ro
+      - /sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro
+      - /:/hostfs:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    user: root
+    command: ["-e", "-system.hostfs=/hostfs", "--strict.perms=false"]
+  filebeat:
+    container_name: filebeat
+    image: docker.elastic.co/beats/filebeat:7.6.1
+    networks:
+      - ELK_BRDG
+    extra_hosts:
+      - "server3:192.168.0.5"
+    volumes:
+      - ./filebeat/filebeat_config/filebeat.yml:/usr/share/filebeat/filebeat.yml
+      - ./filebeat/filebeat_data:/usr/share/filebeat/data
+      - ./filebeat/volcanoes_data.csv:/data/volcanoes_data.csv
+    command: ["-e", "--strict.perms=false"]
