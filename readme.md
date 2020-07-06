@@ -8,7 +8,7 @@ La información fue extraída del repositorio de datos del Departamento de Segur
 
 ![Dashboard de actividad volcánica](./dashboard_volcanoes.png)
 
-## Prerequisitos
+## Prerrequisitos
 
 El proyecto está pensado para trabajar con tres máquinas virtuales conectadas a una red interna en común. Nos referiremos a estas máquinas como **vm1**, **vm2** y **vm3**. Los requerimientos de memoria y almacenamiento mínimos recomendados son los siguientes:
 
@@ -18,7 +18,7 @@ El proyecto está pensado para trabajar con tres máquinas virtuales conectadas 
 |**vm2**|1.5 GB |10 GB         |
 |**vm3**|1.5 GB |10 GB         |
 
-Para levantar el sistema es necesario tener instalado Docker y Docker Compose en cada una de estas máquinas. A continuación se dan las instrucciones para su instalación en Ubuntu Server 18.04, que fue el sistema operativo utilizado para el desarrollo, para otras instalaciones consultar la documentación de [Docker](https://docs.docker.com/get-docker/) y [Docker Compose](https://docs.docker.com/compose/install/).
+Para levantar el sistema es necesario tener instalado Docker y Docker Compose en cada una de estas máquinas. A continuación, se dan las instrucciones para su instalación en Ubuntu Server 18.04, que fue el sistema operativo utilizado para el desarrollo, para otras instalaciones consultar la documentación de [Docker](https://docs.docker.com/get-docker/) y [Docker Compose](https://docs.docker.com/compose/install/).
 
 **Nota:** Durante el desarrollo de este proyecto se usó **VirtualBox** como software de virtualización, la utilización de un software de virtualización diferente puede alterar la forma en la que se realizan algunas configuraciones.
 
@@ -62,7 +62,7 @@ sudo docker-compose --version
 
 ## Configuración
 
-A continuación se describe la preparación de la infraestructura para correr el sistema. Esta configuración debe realizarse en cada una de las máquinas virtuales (vm1, vm2 y vm3).
+A continuación, se describe la preparación de la infraestructura para correr el sistema. Esta configuración debe realizarse en cada una de las máquinas virtuales (vm1, vm2 y vm3).
 
 ### Configuración de las máquinas virtuales
 
@@ -93,7 +93,7 @@ Para aplicar los cambios debemos volver a iniciar sesión.
 
 #### Configuración de red
 
-Para facilitar la comunicación entre nuestras máquinas definimos hostnames e IPs para cada una de nuestras máquinas, de la siguiente manera:
+Para facilitar la comunicación entre nuestras máquinas definimos hostnames e IPs para cada una de nuestras máquinas de la siguiente manera:
 
 |Máquina|Hostname|IP         |
 --------|--------|-----------|
@@ -143,7 +143,7 @@ sudo netplan apply
 ```
 
 ## Instalación
-A continuación se describe la instalación del sistema en sí, con el cuál se podrán ingestar, almacenar y visualizar los datos.
+A continuación, se describe la instalación del sistema en sí, con el cuál se podrán cargar, almacenar y visualizar los datos.
 
 El diagrama de despliegue para este sistema es el siguiente:
 
@@ -303,10 +303,10 @@ El dashboard se encuentra en `kibana_dashboard/volcanoes_dashboard.ndjson`. Debe
 
 ### Visualizar el Dashboard
 
-Para visualizar el Dashboard ingresamos en Kibana, seleccionamos **Dashboard** en el menú de la izquierda y seleccionamos *"Volcanoes Dashboard"*. Seleccionamos un periodo de tiempo apropiado (por ejemplo: los últimos 50 años) y recargamos. Si exiten datos en el periodo de tiempo seleccionado nos mostrará nuestras visualizaciones.
+Para visualizar el Dashboard ingresamos en Kibana, seleccionamos **Dashboard** en el menú de la izquierda y seleccionamos *"Volcanoes Dashboard"*. Seleccionamos un periodo de tiempo apropiado (por ejemplo: los últimos 50 años) y recargamos. Si exsiten datos en el periodo de tiempo seleccionado nos mostrará nuestras visualizaciones.
 
 ![Dashboard de actividad volcánica](./dashboard_volcanoes.png)
 
-Los íconos que se pueden observar fueron extraidos de [icons8.com](icons8.com).
+Los íconos que se pueden observar fueron extraídos de [icons8.com](icons8.com).
 
 ¡Listo! Ahora sólo queda explorar los datos y, si lo deseas, puedes agregar más visualizaciones o modificar las existentes.
