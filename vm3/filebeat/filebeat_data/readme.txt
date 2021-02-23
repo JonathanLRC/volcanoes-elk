@@ -1,2 +1,2 @@
-Limpiar esta carpeta para reenviar el archivo
-Esto puede ser realizado al ejecutar el script limpiar.sh
+Clean this folder to send the file again
+This can be done by running the script clean.sh
