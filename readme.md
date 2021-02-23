@@ -221,7 +221,7 @@ This will allow us to access Kibana through the address <http://localhost:4444> 
 
 #### Configuration of the *volcanoes_data* index
 
-In order for our data to be correctly loaded into Elasticsearch, especially if we want to display our information on the map, we must create the index and configure it with a * geo-point * before running Logstash.
+In order for our data to be correctly loaded into Elasticsearch, especially if we want to display our information on the map, we must create the index and configure it with a *geo-point* before running Logstash.
 
 To do this we enter Kibana through the browser and in the menu on the left side we select **Dev Tools**. We write or copy the following query in the console and execute it by hitting the play button:
 
