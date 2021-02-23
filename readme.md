@@ -1,7 +1,5 @@
 # Volcanic activity dashboard made with the ELK stack
 
-Este proyecto consiste en la implementación de la pila ELK para la visualización de datos sobre actividad volcánica significativa en el mundo.
-
 This project consists of the implementation of the ELK stack for the visualization of data on significant volcanic activity in the world.
 
 The information was extracted from the data repository of the United States Department of Homeland Security ([HIFLD](https://hifld-geoplatform.opendata.arcgis.com/datasets/3ed5925b69db4374aec43a054b444214_6/data)).
