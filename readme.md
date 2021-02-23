@@ -1,130 +1,130 @@
-﻿# Dashboard de actividad volcánica con ELK
+# Volcanic activity dashboard made with the ELK stack
 
 Este proyecto consiste en la implementación de la pila ELK para la visualización de datos sobre actividad volcánica significativa en el mundo.
 
-Cada una de nuestras aplicaciones se encontrará corriendo en un contenedor de Docker y se comunicarán entre ellas para integrar nuestro sistema.
+This project consists of the implementation of the ELK stack for the visualization of data on significant volcanic activity in the world.
 
-La información fue extraída del repositorio de datos del Departamento de Seguridad Nacional de los Estados Unidos ([HIFLD](https://hifld-geoplatform.opendata.arcgis.com/datasets/3ed5925b69db4374aec43a054b444214_6/data)).
+The information was extracted from the data repository of the United States Department of Homeland Security ([HIFLD](https://hifld-geoplatform.opendata.arcgis.com/datasets/3ed5925b69db4374aec43a054b444214_6/data)).
 
-![Dashboard de actividad volcánica](./dashboard_volcanoes.png)
+![Volcanic activity dashboard](./dashboard_volcanoes.png)
 
-## Prerrequisitos
+## Prerequisites
 
-El proyecto está pensado para trabajar con tres máquinas virtuales conectadas a una red interna en común. Nos referiremos a estas máquinas como **vm1**, **vm2** y **vm3**. Los requerimientos de memoria y almacenamiento mínimos recomendados son los siguientes:
+The project is designed to work with three virtual machines connected to a common internal network. We will refer to these machines as **vm1**, **vm2**, and **vm3**. The recommended minimum memory and storage requirements are as follows:
 
-|Máquina|RAM    |Almacenamiento|
-|-------|------:|-------------:|
-|**vm1**|2 GB   |16 GB         |
-|**vm2**|1.5 GB |10 GB         |
-|**vm3**|1.5 GB |10 GB         |
+|Machine|RAM    |Storage|
+|-------|------:|------:|
+|**vm1**|2 GB   |16 GB  |
+|**vm2**|1.5 GB |10 GB  |
+|**vm3**|1.5 GB |10 GB  |
 
-Para levantar el sistema es necesario tener instalado Docker y Docker Compose en cada una de estas máquinas. A continuación, se dan las instrucciones para su instalación en Ubuntu Server 18.04, que fue el sistema operativo utilizado para el desarrollo, para otras instalaciones consultar la documentación de [Docker](https://docs.docker.com/get-docker/) y [Docker Compose](https://docs.docker.com/compose/install/).
+To lift the system it is necessary to have Docker and Docker Compose installed on each of these machines. Next, the instructions for its installation in Ubuntu Server 18.04 are given, which was the operating system used for development, for other installations consult the documentation of [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/).
 
-**Nota:** Durante el desarrollo de este proyecto se usó **VirtualBox** como software de virtualización, la utilización de un software de virtualización diferente puede alterar la forma en la que se realizan algunas configuraciones.
+**VirtualBox** was used as virtualization software during the development of this project, the use of a different virtualization software may alter the way some configurations are done.
 
-### Instalación de Docker
+### Docker installation
 
-Actualizar los repositorios de software:
+Update software repositories:
 ```
 sudo apt-get update
 ```
-Descargar e instalar Docker:
+Download and install Docker:
 ```
 sudo apt install docker.io
 ```
-Iniciar Docker:
+Start Docker:
 ```
 sudo systemctl start docker
 ```
-Habilitar el servicio de Docker para iniciar automáticamente en el arranque:
+Enable the Docker service to start automatically on boot:
 ```
 sudo systemctl enable docker
 ```
-Comprobar la versión instalada:
+Check the installed version:
 ```
 sudo docker --version
 ```
 
-### Instalación de Docker Compose
+### Install Docker Compose
 
-Descargar Docker Compose (**Nota:** aquí se está descargando la versión 1.26.1, para descargar la versión más reciente o alguna otra consultar la [documentación](https://docs.docker.com/compose/install/)).
+Download Docker Compose (**Note:** version 1.26.1 is being downloaded here, to download the most recent version or any other consult the [documentation](https://docs.docker.com/compose/install/)).
 ```
 sudo curl -L "https://github.com/docker/compose/releases/download/1.26.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 ```
-Asignar permisos de ejecución al binario:
+Assign execute permission to the binary:
 ```
 sudo chmod +x /usr/local/bin/docker-compose
 ```
-Comprobar la versión instalada:
+Check the installed version:
 ```
 sudo docker-compose --version
 ```
 
-## Configuración
+## Configuration
 
-A continuación, se describe la preparación de la infraestructura para correr el sistema. Esta configuración debe realizarse en cada una de las máquinas virtuales (vm1, vm2 y vm3).
+Next, the preparation of the infrastructure to run the system is described. This configuration must be done on each of the virtual machines (vm1, vm2 and vm3).
 
-### Configuración de las máquinas virtuales
+### Virtual machines configuration
 
-Estos son los pasos a seguir para que nuestro sistema Ubuntu corra sin problemas la pila de ELK, esta configuración puede variar en otros sistemas operativos.
+These are the steps to follow so that our Ubuntu system runs the ELK stack without problems, this configuration may vary in other operating systems.
 
-#### Configuración del sistema
+#### System configuration
 
-Es necesario incrementar el parámetro `max_map_count` del kernel de linux para evitar quedarse sin áreas de mapeo. Para ello debemos agregar la siguiente línea al archivo `/etc/sysctl.conf`:
+It is necessary to increase the linux kernel parameter `max_map_count` to avoid running out of mapping areas. For this we must add the following line to the file `/etc/sysctl.conf`:
 ```
 vm.max_map_count=262144
 ```
-Recargamos la configuración:
+We reload the configuration:
 ```
 sysctl -p
 ```
-Comprobamos el nuevo valor:
+We check the new value:
 ```
 cat /proc/sys/vm/max_map_count
 ```
 
-Debemos configurar también los límites de memoria para nuestro usuario. Para ello editamos el archivo `/etc/security/limits.conf` y añadimos las siguientes líneas (**Nota:** el usuario que tenemos asignado para la ejecución del sistema en todas las máquinas es el usuario **elastic**, en caso de tener un nombre de usuario diferente, sustituir el nombre de elastic):
+We must also configure the memory limits for our user. To do this we edit the file `/etc/security/limits.conf` and add the following lines (**Note:** the user that we have assigned to run the system on all machines is the user **elastic**, in case you have a different username, substitute this username):
 ```
 elastic soft memlock unlimited
 elastic hard memlock unlimited
 ```
 
-Para aplicar los cambios debemos volver a iniciar sesión.
+To apply the changes we must log in again.
 
-#### Configuración de red
+#### Network Configuration
 
-Para facilitar la comunicación entre nuestras máquinas definimos hostnames e IPs para cada una de nuestras máquinas de la siguiente manera:
+To facilitate the communication between our machines we define hostnames and IPs for each of our machines in the following way:
 
-|Máquina|Hostname|IP         |
+|Machine|Hostname|IP         |
 --------|--------|-----------|
 |**vm1**|server1 |192.168.0.3|
 |**vm2**|server2 |192.168.0.4|
 |**vm3**|server3 |192.168.0.5|
 
-Editamos el archivo `/etc/hosts` y añadimos las siguientes líneas en cada una de las máquinas virtuales:
+We edit the file `/etc/hosts` and add the following lines in each of the virtual machines:
 ```
 192.168.0.3 server1
 192.168.0.4 server2
 192.168.0.5 server3
 ```
 
-Debemos averiguar el nombre de la interfaz que está conectada a nuestra red interna, esto lo podemos lograr con el siguiente comando:
+We must find out the name of the interface that is connected to our internal network, we can achieve this with the following command:
 ```
 ip address
 ```
 
-En nuestro caso para la **vm1** la interfaz asignada es `enp0s8`.
+In our case for **vm1** the assigned interface is `enp0s8`.
 
-Editamos el archivo de configuración de red `/etc/netplan/*.yaml` (en nuestro caso `/etc/netplan/50-cloud-init.yaml`) y configuramos la interfaz para cada una de nuestras máquinas de la siguiente manera:
+We edit the network configuration file `/etc/netplan/*.yaml` (in our case `/etc/netplan/50-cloud-init.yaml`) and configure the interface for each of our machines as follows :
 <pre>
 ...
-        <b>interfaz_intranet</b>:
+        <b>intranet_interface</b>:
             dhcp4: no
-            addresses: [<b>ip_por_asignar</b>/24]
+            addresses: [<b>ip_to_assign</b>/24]
 ...
 </pre>
 
-En nuestro caso para la **vm1** quedaría:
+In our case for **vm1** it would be:
 <pre>
 network:
     ethernets:
@@ -137,47 +137,47 @@ network:
 </pre>
 
 
-Aplicamos la configuración:
+We apply the configuration:
 ```
 sudo netplan apply
 ```
 
-## Instalación
-A continuación, se describe la instalación del sistema en sí, con el cuál se podrán cargar, almacenar y visualizar los datos.
+## Installation
+Next, the installation of the system itself is described, with which the data can be loaded, stored and visualized.
 
-El diagrama de despliegue para este sistema es el siguiente:
+The deployment diagram for this system is as follows:
 
-![Diagrama de despliegue para el sistema](./diagrama_de_despliegue.png)
+![Deployment diagram for the system](./diagrama_de_despliegue.png)
 
-### Descarga y copia de los archivos necesarios
+### Download and copy the necessary files
 
-Para conseguir la ejecución del sistema se deben descargar los directorios *vm1*, *vm2* y *vm3* de este repositorio. Para ello se debe descargar el repositorio, para más información acerca de cómo descargar este repositorio visitar: [Cómo clonar un repositorio](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/cloning-a-repository).
+To get the system to run, you must download the *vm1*, *vm2* and *vm3* directories from this repository. For this you must download the repository, for more information about how to download this repository visit: [How to clone a repository](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/cloning-a-repository).
 
-Se sebe guardar en cada una de las máquinas el directorio correspondiente:
+The corresponding directory must be saved on each of the machines:
 
-|Máquina|Directorio|
+|Machine|Directory|
 |-------|----------|
 |**vm1**|vm1       |
 |**vm2**|vm2       |
 |**vm3**|vm3       |
 
-### Instalación inicial
+### Initial setup
 
-#### Ejecución de Elasticsearch y Kibana
+#### Running Elasticsearch and Kibana
 
-Para configurar en un inicio nuestro sistema es importante que ejecutemos primeramente Docker Compose en las máquinas **vm1** y **vm2**, ingresando el siguiente comando en los directorios *vm1* y *vm2* respectivamente:
+To configure our system it is important that we first run Docker Compose on **vm1** and **vm2** machines, entering the following command in the **vm1** and **vm2** directories respectively:
 ```
 sudo docker-compose up -d
 ```
 
-Esperamos unos minutos a que levante Elasticsearch y Kibana.
+We wait a few minutes for Elasticsearch and Kibana to start.
 
-Podemos comprobar el estado de Elasticsearch con el siguiente comando en **vm1**:
+We can check the status of Elasticsearch with the following command in **vm1**:
 ```
 curl -XGET localhost:9700
 ```
 
-Cuando Elastic esté listo obtendremos una respuesta similar a la siguiente:
+When Elastic is ready we will get a response similar to the following:
 ```
 {
   "name" : "node1",
@@ -198,34 +198,34 @@ Cuando Elastic esté listo obtendremos una respuesta similar a la siguiente:
 }
 ```
 
-Una vez que levante Elasticsearch podemos comprobar el estado de Kibana ejecutando el siguiente comando en **vm2**:
+Once Elasticsearch is up we can check the status of Kibana by executing the following command in **vm2**:
 ```
 curl -XGET localhost:5601
 ```
 
-En este caso cuando Kibana esté listo no obtendremos una respuesta, si recibimos alguna, por ejemplo:
+In this case when Kibana is ready we will not get a response, if we receive one, for example:
 ```
 curl: (56) Recv failure: Connection reset by peer
 ```
 
-Significa que todavía no está listo el servidor.
+It means that the server is not ready yet.
 
 
-#### Ingresar a Kibana
+#### Login to Kibana
 
-Kibana se encuentra corriendo en la máquina **vm2** en el puerto 5601. Para poder acceder a ella desde un navegador podemos asignar la siguiente regla de reenvío de puertos en **VirtualBox**:
+Kibana is running on the **vm2** machine on port 5601. To be able to access it from a browser we can assign the following port forwarding rule in **VirtualBox**:
 
-|Protocolo|IP anfitrión|Puerto anfitrión|IP invitado|Puerto invitado|
-|---------|------------|----------------|-----------|---------------|
-|TCP      |127.0.0.1   |4444            |           |5601           |
+|Protocol|Host IP  |Host port|Guest IP|Guest port|
+|--------|---------|---------|--------|----------|
+|TCP     |127.0.0.1|4444     |        |5601      |
 
-Esto nos permitirá acceder a Kibana a través de la dirección <http://localhost:4444> desde nuestro navegador.
+This will allow us to access Kibana through the address <http://localhost:4444> from our browser.
 
-#### Configuración del índice *volcanoes_data*
+#### Configuration of the *volcanoes_data* index
 
-Para que nuestros datos sean cargados correctamente a Elasticsearch, especialmente si queremos visualizar en el mapa nuestra información, debemos crear el índice y configurarlo con un *geo-punto* antes de correr Logstash.
+In order for our data to be correctly loaded into Elasticsearch, especially if we want to display our information on the map, we must create the index and configure it with a * geo-point * before running Logstash.
 
-Para ello ingresamos a Kibana a través del navegador y en el menú del lado izquierdo seleccionamos **Dev Tools**. Escribimos o copiamos la siguiente consulta en la consola y la ejecutamos dándole al botón de play:
+To do this we enter Kibana through the browser and in the menu on the left side we select **Dev Tools**. We write or copy the following query in the console and execute it by hitting the play button:
 
 ```
 PUT volcanoes_data
@@ -240,36 +240,36 @@ PUT volcanoes_data
 }
 ```
 
-Podemos comprobar que el índice se haya creado al listar nuestros índices con la siguiente petición:
+We can verify that the index has been created by listing our indexes with the following request:
 ```
 GET _cat/indices
 ```
 
-**Nota:** En caso de haber corrido Docker Compose en la máquina **vm3** antes de esto es probable que se haya creado el índice sin el *geo-punto*, si es así, debemos recrearlo y volver a correr Logstash. Para eliminar el índice ejecutamos la siguiente consulta desde Kibana: `DELETE volcanoes_data` además de ejecutar el script para limpiar el puntero de filebeat en la máquina **vm3** (`./vm3/filebeat/filebeat_data/limpiar.sh`).
+**Note:** In case we have run Docker Compose on the **vm3** machine before this it is likely that the index has been created without the *geo-dot*, if so, we must recreate it and run Logstash again. To delete the index we execute the following query from Kibana: `DELETE volcanoes_data` in addition to executing the script to clean the filebeat pointer on the **vm3** machine (`./vm3/filebeat/filebeat_data/clean.sh`).
 
-### Iniciar los contenedores
+### Start the containers
 
-Debemos ingresar en cada una de las máquinas al directorio **vm\*** correspondiente y ejecutar Docker Compose:
+We must enter to the corresponding **vm\*** directory on each of the machines and execute Docker Compose:
 ```
 sudo docker-compose up -d
 ```
-Esto nos creará los siguientes contenedores:
-|Máquina|Contenedores|
+This will create the following containers:
+|Machine|Containers|
 |-------|------------|
 |**vm1**|es1 <br> es2 <br> es3 <br> metricbeat|
 |**vm2**|kibana <br> metricbeat               |
 |**vm3**|logstash-metricbeat <br> logstash-filebeat <br> metricbeat <br> filebeat|
 
-Si queremos revisar los logs de algún contenedor en específico debemos ejecutar el siguiente comando en la máquina correspondiente:
+If we want to review the logs of a specific container, we must execute the following command on the corresponding machine:
 <pre>
-sudo docker logs -f <em>nombre_del_contenedor</em>
+sudo docker logs -f <em>container_name</em>
 </pre>
 
-Para dejar de seguir los logs debemos presionar <b>Ctrl + C</b>.
+To stop following the logs we must press <b>Ctrl + C</b>.
 
-Esto puede tardar algunos minutos en levantar y posteriormente ingresar los datos a Elasticsearch.
+It may take a few minutes to lift and then enter the data into Elasticsearch.
 
-Para mejorar el rendimiento de nuestra pila ELK podemos incrementar la memoria que le hemos asignado, para ello podemos editar los siguientes archivos:
+To improve the performance of our ELK stack we can increase the memory that we have assigned to it, for this we can edit the following files:
 ```
 vm1/elastic1_config/jvm.options
 vm1/elastic3_config/jvm.options
@@ -278,7 +278,7 @@ vm1/elastic2_config/jvm.options
 vm3/logstash_metricbeat_config/jvm.options
 vm3/logstash_filebeat_config/jvm.options
 ```
-Dentro de ellos editamos los parámetros `-Xms` y `-Xmx`. Algunos ejemplos:
+Inside them we edit the parameters `-Xms` and `-Xmx`. Some examples:
 ```
 -Xms256m
 -Xmx256m
@@ -288,25 +288,25 @@ Dentro de ellos editamos los parámetros `-Xms` y `-Xmx`. Algunos ejemplos:
 -Xmx1g
 ```
 
-Si cambiamos esta configuración debemos reiniciar nuestros contenedores al parar docker-compose con el comando `sudo docker-compose down` y volver a correr el comando `sudo docker-compose up -d`. Es importante que estos comandos sean ejecutados en los directorios **vm\*** o alguno de sus subdirectorios para funcionar correctamente.
+If we change this setting, we must restart our containers by stopping docker-compose with the command `sudo docker-compose down` and rerunning the command `sudo docker-compose up -d`. It is important that these commands are executed in the **vm\*** directories or one of its subdirectories to function correctly.
 
-### Parar los contenedores
+### Stop the containers
 
-Para detener la ejecución de nuestros contenedores debemos ejecutar el siguiente comando en el directorio **vm\*** de cada una de las máquinas:
+To stop the execution of our containers we must execute the following command in the directory **vm\*** of each of the machines:
 ```
 sudo docker-compose down
 ```
 
-### Cargar el Dashboard
+### Load the Dashboard
 
-El dashboard se encuentra en `kibana_dashboard/volcanoes_dashboard.ndjson`. Debemos cargar este archivo a Kibana. Para ello debemos seleccionar *Stack Management* en el menú de la izquierda, seleccionar *Saved Objects* y finalmente *Import*. Arrastramos el archivo `volcanoes_dashboard.ndjson` y damos click en *Import*. Listo, tenemos todos los objetos necesarios para ingresar y ver nuestros datos en el Dashboard.
+The dashboard is located at `kibana_dashboard/volcanoes_dashboard.ndjson`. We must upload this file to Kibana. For this we must select *Stack Management* in the menu on the left, select *Saved Objects* and finally *Import*. We drag the file `volcanoes_dashboard.ndjson` and click on *Import*. Now we have all the necessary objects to enter and view our data in the Dashboard.
 
-### Visualizar el Dashboard
+### Visualize the Dashboard
 
-Para visualizar el Dashboard ingresamos en Kibana, seleccionamos **Dashboard** en el menú de la izquierda y seleccionamos *"Volcanoes Dashboard"*. Seleccionamos un periodo de tiempo apropiado (por ejemplo: los últimos 50 años) y recargamos. Si exsiten datos en el periodo de tiempo seleccionado nos mostrará nuestras visualizaciones.
+To visualize the Dashboard we enter to Kibana, select **Dashboard** in the menu on the left and select *"Volcanoes Dashboard"*. We select an appropriate period of time (for example: the last 50 years) and recharge. If there is data in the selected period of time, it will show us our visualizations.
 
-![Dashboard de actividad volcánica](./dashboard_volcanoes.png)
+![Volcanic activity dashboard](./dashboard_volcanoes.png)
 
-Los íconos que se pueden observar fueron extraídos de [icons8.com](icons8.com).
+The icons that can be seen were taken from [icons8.com](icons8.com).
 
-¡Listo! Ahora sólo queda explorar los datos y, si lo deseas, puedes agregar más visualizaciones o modificar las existentes.
+That's it! Now it only remains to explore the data and, if you wish, you can add more visualizations or modify the existing ones.
